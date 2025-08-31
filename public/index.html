@@ -6,96 +6,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-  --bg: #050506;        /* darker background */
-  --panel: #0b0c0e;     /* panel background */
-  --border: #1a1b1e;    /* subtle dividers */
-  --fg: #ffffff;        /* white text */
-  --muted: #8b8f97;     /* muted gray text */
- --ok: #a1fb33;
-}
+      --bg: #050506;        /* darker background */
+      --panel: #0b0c0e;     /* panel background */
+      --border: #1a1b1e;    /* subtle dividers */
+      --fg: #ffffff;        /* white text */
+      --muted: #8b8f97;     /* muted gray text */
+      --ok: #a1fb33;
+    }
 
-
-
-    html,body{
+    html,body {
       margin:0; padding:0; height:100%;
       background:var(--bg); color:var(--fg);
       font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
     }
-    .wrap{max-width:980px;margin:0 auto;padding:16px 12px 48px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .title{font-weight:700;letter-spacing:.5px; font-size: 39px;}
-    .badge{color:var(--bg);background:var(--ok);padding:2px 8px;border-radius:999px;font-size:12px}
-    .muted{color:var(--muted)}
-    .panel{
-      background:var(--panel); border:1px solid var(--border); border-radius:10px;
-      padding:8px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
-    }
-  .date{
-    color: var(--muted)
-  }
-    /* 3 columns: TIME | WEBSITE | HEADLINE (headline all the way right) */
-    .row {
-  display: grid;
-  grid-template-columns: 1fr 110px 115px auto ; /* headline expands, website right */
-  gap: 10px;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--border);
-  align-items: center;
-  min-height: 42px; height: 42px;
-  
-}
 
-    .row:last-child{border-bottom:0}
-  
-    /* header row labels */
-    .row.head{
-      color:var(--muted); text-transform:uppercase; font-size:12px; letter-spacing:.06em;
-      border-bottom:1px solid var(--border);
-      height:34px; min-height:34px;
+    .wrap {max-width:980px;margin:0 auto;padding:12px 9px 36px}
+
+    header {display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:9px}
+
+    /* headline font smaller but readable */
+    .title {font-weight:700;letter-spacing:.5px;font-size:29px;}
+
+    /* badge smaller */
+    .badge {color:var(--bg);background:var(--ok);padding:2px 6px;border-radius:999px;font-size:9px}
+
+    .muted {color:var(--muted)}
+
+    .panel {
+      background:var(--panel); border:1px solid var(--border); border-radius:8px;
+      padding:6px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
     }
+
+    .date {color: var(--muted)}
+
+    /* grid with comfy spacing */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 110px 120px auto; /* headline | date | time | site */
+      gap: 10px;
+      padding: 0 8px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      min-height: 42px; height: 42px;
+    }
+
+    .row:last-child {border-bottom:0}
+
+    /* header row */
+    .row.head {
+      color:var(--muted); text-transform:uppercase; font-size:10px; letter-spacing:.06em;
+      border-bottom:1px solid var(--border);
+      height:32px; min-height:32px;
+    }
+
+    /* stripes */
     .striped .row:not(.head):nth-child(even) {
-  background-color: rgb(22, 28, 17); /* subtle light overlay */
-}
-  
-    .time{color:var(--muted);}
-    .source{color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-  
-    /* headline cell: single line with ellipsis */
-    .titlecell{overflow:hidden}
-    .titlelink{
+      background-color: rgb(16, 22, 10);
+    }
+
+    .time, .date, .source {
+      white-space: nowrap;
+    }
+    .time, .source {
+      text-align: left;
+    }
+    .time {color:var(--muted);}
+    .source {color:var(--muted);overflow:hidden;text-overflow:ellipsis;}
+
+    .titlecell {overflow:hidden}
+    .titlelink {
       color:#fff; text-decoration:none; display:block;
       overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     }
-    .titlelink:hover{color:#fff; text-decoration:underline}
-  
-    .controls{display:flex;align-items:center;gap:10px}
+    .titlelink:hover {color:#fff; text-decoration:underline}
+
+    .controls {display:flex;align-items:center;gap:8px}
     button {
-  background: #1a1b21;
-  color: #fff;
-  border: 1px solid #2a2c33;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-    button:disabled{opacity:.6;cursor:default}
+      background:#1a1b21;
+      color:#fff;
+      border:1px solid #2a2c33;
+      padding:5px 9px;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:12px;
+    }
+    button:disabled {opacity:.6;cursor:default}
     button.active {
-  background: var(--ok);   /* green */
-  color: var(--bg);        /* dark text on green */
-  border-color: var(--ok);
-}
-    .error{color:#ff6b6b;margin-top:8px}
-    .footer{margin-top:10px;color:var(--muted);font-size:12px}
+      background:var(--ok); color:var(--bg); border-color:var(--ok);
+    }
+
+    .error {color:#ff6b6b;margin-top:8px}
+    .footer {margin-top:10px;color:var(--muted);font-size:9px}
   </style>
-  
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="title">NYT Live Feed <span id="count" class="badge">0</span></div>
-      <div class = "controls">
-          <button id="refreshBtn">Refresh</button>
-          <button id="autoBtn" class="active">Auto Refresh: on</button>
-  <button id="stripeBtn">Striped: off</button>
+      <div class="controls">
+        <button id="refreshBtn">Refresh</button>
+        <button id="autoBtn" class="active">Auto Refresh: on</button>
+        <button id="stripeBtn">Striped: off</button>
       </div>
     </header>
 
@@ -104,7 +115,6 @@
     <div class="footer">Newest first • updates every 30s • links open in a new tab</div>
   </div>
 
-  
   <script>
     // ===== elements =====
     const board = document.getElementById('board');
@@ -113,16 +123,15 @@
     const refreshBtn = document.getElementById('refreshBtn');
     const autoBtn = document.getElementById('autoBtn');
     const stripeBtn = document.getElementById('stripeBtn');
-  
+
     // ===== state =====
     const AUTO_MS = 30_000;
     let autoTimer = null;
     let autoOn = true;
     let striped = false;
-  
+
     // ===== persistence =====
     const SETTINGS_KEY = 'rssTermPrefs';
-  
     function loadSettings() {
       try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; }
       catch { return {}; }
@@ -130,7 +139,7 @@
     function saveSettings() {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify({ autoOn, striped }));
     }
-  
+
     // ===== utils =====
     function timeAgo(iso) {
       const then = new Date(iso).getTime();
@@ -146,7 +155,7 @@
       try { return new URL(url).host.replace(/^www\./, ''); }
       catch { return ''; }
     }
-  
+
     // ===== rendering =====
     function renderHeader() {
       const h = document.createElement('div');
@@ -158,13 +167,12 @@
       h.appendChild(c); h.appendChild(d); h.appendChild(t); h.appendChild(s);
       board.appendChild(h);
     }
-  
+
     function rowTemplate(item) {
       const r = document.createElement('div');
       r.className = 'row';
       r.setAttribute('role','listitem');
-  
-      // headline
+
       const c = document.createElement('div');
       c.className = 'titlecell';
       const a = document.createElement('a');
@@ -172,8 +180,7 @@
       a.href = item.link; a.target = '_blank'; a.rel = 'noopener noreferrer';
       a.textContent = item.title;
       c.appendChild(a);
-  
-      // date (MM/DD/YYYY)
+
       const d = document.createElement('div');
       d.className = 'date';
       const dateObj = new Date(item.publishedAt);
@@ -181,28 +188,26 @@
       const dd = String(dateObj.getDate()).padStart(2, '0');
       const yyyy = dateObj.getFullYear();
       d.textContent = `${mm}/${dd}/${yyyy}`;
-  
-      // time ago
+
       const t = document.createElement('div');
       t.className = 'time';
       t.textContent = timeAgo(item.publishedAt);
-  
-      // website
+
       const s = document.createElement('div');
       s.className = 'source';
       s.textContent = hostFrom(item.link) || 'nytimes.com';
-  
+
       r.appendChild(c); r.appendChild(d); r.appendChild(t); r.appendChild(s);
       return r;
     }
-  
+
     // ===== data =====
     async function fetchFeed() {
       const res = await fetch('/api/feed', { cache: 'no-store' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
     }
-  
+
     async function refresh() {
       refreshBtn.disabled = true;
       errorEl.hidden = true;
@@ -220,7 +225,7 @@
         refreshBtn.disabled = false;
       }
     }
-  
+
     // ===== visual helpers for toggles =====
     function applyStripedVisual() {
       document.body.classList.toggle('striped', striped);
@@ -231,7 +236,7 @@
       autoBtn.classList.toggle('active', autoOn);
       autoBtn.textContent = `Auto Refresh: ${autoOn ? 'on' : 'off'}`;
     }
-  
+
     // ===== controls: auto toggle =====
     function startAuto() {
       if (autoTimer) clearInterval(autoTimer);
@@ -248,35 +253,32 @@
       saveSettings();
     }
     autoBtn.addEventListener('click', () => (autoOn ? stopAuto() : startAuto()));
-  
+
     // ===== controls: striped toggle =====
     stripeBtn.addEventListener('click', () => {
       striped = !striped;
       applyStripedVisual();
       saveSettings();
     });
-  
-    // keyboard: r = refresh, a = toggle auto
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'r') refresh();
       if (e.key === 'a') (autoOn ? stopAuto() : startAuto());
     });
-  
-    // ===== boot: load prefs, apply, refresh, then start auto if on =====
+
+    // ===== boot =====
     (function init() {
       const prefs = loadSettings();
       if (typeof prefs.autoOn === 'boolean') autoOn = prefs.autoOn;
       if (typeof prefs.striped === 'boolean') striped = prefs.striped;
-  
+
       applyAutoVisual();
       applyStripedVisual();
-  
+
       refresh().then(() => {
-        if (autoOn) startAuto(); else stopAuto(); // ensures correct interval state + label
+        if (autoOn) startAuto(); else stopAuto();
       });
     })();
   </script>
-  
-  
 </body>
 </html>
