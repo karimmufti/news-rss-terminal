@@ -5,66 +5,92 @@ const Parser = require('rss-parser');
 const fetch = require('node-fetch');
 
 const app = express();
-app.use(cors());               // allow your browser to call the API
+app.use(cors());
 app.use(express.json());
 
-const FEED_URL = 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml';
+// ---------- FEEDS: start with a few, add more later ----------
+const FEEDS = [
+  'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
+  'https://www.theguardian.com/world/rss',
+  'https://feeds.bbci.co.uk/news/world/rss.xml',
+];
+
+// serve the static frontend
+app.use(express.static('public'));
+
+// one parser instance is fine
 const parser = new Parser({ timeout: 10000 });
 
-// optional validators for conditional requests
-let etag = null;
-let lastModified = null;
+// tiny helper: get a host from any URL
+function host(u) {
+  try { return new URL(u).host.replace(/^www\./, ''); }
+  catch { return ''; }
+}
 
-// fetch + parse like before
-async function fetchFeed(url) {
-  const headers = {};
-  if (etag) headers['If-None-Match'] = etag;
-  if (lastModified) headers['If-Modified-Since'] = lastModified;
+// normalize items from any feed into a common shape
+function normalizeItems(items, sourceHost) {
+  return (items || []).map((it) => {
+    const link = it.link || it.guid || '';
+    const publishedAt = new Date(it.isoDate || it.pubDate || 0);
+    return {
+      id: (it.guid || link || it.title || '').toLowerCase(), // for de-dupe
+      title: it.title || '(no title)',
+      link,
+      source: sourceHost,                      // e.g., nytimes.com
+      summary: it.contentSnippet || '',
+      publishedAt: isNaN(publishedAt) ? new Date(0) : publishedAt,
+    };
+  });
+}
 
-  const res = await fetch(url, { headers });
-
-  if (res.status === 304) {
-    // nothing changed — in a simple demo we’ll just refetch without validators
-    // (NYT doesn’t always honor validators consistently)
-    // You can return a cached copy if you implement caching.
-  }
-
-  etag = res.headers.get('etag') || etag;
-  lastModified = res.headers.get('last-modified') || lastModified;
-
+// fetch & parse one feed URL → normalized items
+async function fetchOne(url) {
+  // basic fetch; we could add headers/user-agent if a site requires it
+  const res = await fetch(url);
   const xml = await res.text();
   const feed = await parser.parseString(xml);
-  return feed.items || [];
+  const src = host(url) || 'feed';
+  return normalizeItems(feed.items, src);
 }
 
-// helper to normalize + sort newest → oldest
-function normalizeAndSort(items) {
-  return (items || [])
-    .map(it => ({
-      title: it.title || '(no title)',
-      link: it.link || '',
-      author: it.creator || it['dc:creator'] || null,
-      publishedAt: new Date(it.isoDate || it.pubDate || 0).toISOString(), // ISO string for JSON
-      summary: it.contentSnippet || '',
-      // you can include more fields later (content, categories, etc.)
-    }))
-    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-}
-
-// API: GET /api/feed → JSON list of latest items
+// GET /api/feed?limit=50
+// merge all feeds, de-dupe by id, sort newest→oldest
 app.get('/api/feed', async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit || '50', 10) || 50, 200);
+
   try {
-    const items = await fetchFeed(FEED_URL);
-    const sorted = normalizeAndSort(items);
-    res.json({ items: sorted.slice(0, 50) }); // cap to 50 for now
+    // 1) fetch all feeds concurrently
+    const arrays = await Promise.all(FEEDS.map(fetchOne));
+
+    // 2) merge
+    const merged = arrays.flat();
+
+    // 3) de-dupe: prefer the newer duplicate
+    const dedup = new Map();
+    for (const it of merged) {
+      const prev = dedup.get(it.id);
+      if (!prev || it.publishedAt > prev.publishedAt) dedup.set(it.id, it);
+    }
+
+    // 4) sort newest first and trim to limit
+    const sorted = [...dedup.values()]
+      .sort((a, b) => b.publishedAt - a.publishedAt)
+      .slice(0, limit)
+      .map((it) => ({
+        title: it.title,
+        link: it.link,
+        author: null,
+        publishedAt: it.publishedAt.toISOString(),
+        summary: it.summary,
+        source: it.source, // <-- frontend can show this directly
+      }));
+
+    res.json({ items: sorted });
   } catch (e) {
-    console.error('API error:', e);
-    res.status(500).json({ error: 'Failed to fetch feed' });
+    console.error('API /api/feed error:', e);
+    res.status(500).json({ error: 'Failed to fetch feeds' });
   }
 });
-
-// serve static files from /public (we’ll add index.html next)
-app.use(express.static('public'));
 
 // start server
 const PORT = process.env.PORT || 3000;
