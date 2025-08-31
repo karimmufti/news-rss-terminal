@@ -104,6 +104,7 @@
     <div class="footer">Newest first • updates every 30s • links open in a new tab</div>
   </div>
 
+  
   <script>
     // ===== elements =====
     const board = document.getElementById('board');
@@ -119,6 +120,17 @@
     let autoOn = true;
     let striped = false;
   
+    // ===== persistence =====
+    const SETTINGS_KEY = 'rssTermPrefs';
+  
+    function loadSettings() {
+      try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; }
+      catch { return {}; }
+    }
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ autoOn, striped }));
+    }
+  
     // ===== utils =====
     function timeAgo(iso) {
       const then = new Date(iso).getTime();
@@ -130,7 +142,6 @@
       const rem = mins % 60;
       return hrs + 'h ' + (rem ? rem + 'm ' : '') + 'ago';
     }
-  
     function hostFrom(url) {
       try { return new URL(url).host.replace(/^www\./, ''); }
       catch { return ''; }
@@ -153,7 +164,7 @@
       r.className = 'row';
       r.setAttribute('role','listitem');
   
-      // headline (left, ellipsis)
+      // headline
       const c = document.createElement('div');
       c.className = 'titlecell';
       const a = document.createElement('a');
@@ -162,22 +173,21 @@
       a.textContent = item.title;
       c.appendChild(a);
   
-      // date (YYYY-MM-DD)
+      // date (MM/DD/YYYY)
       const d = document.createElement('div');
       d.className = 'date';
       const dateObj = new Date(item.publishedAt);
-const mm = String(dateObj.getMonth() + 1).padStart(2, '0'); // months are 0-based
-const dd = String(dateObj.getDate()).padStart(2, '0');
-const yyyy = dateObj.getFullYear();
-d.textContent = `${mm}/${dd}/${yyyy}`;
-
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const yyyy = dateObj.getFullYear();
+      d.textContent = `${mm}/${dd}/${yyyy}`;
   
       // time ago
       const t = document.createElement('div');
       t.className = 'time';
       t.textContent = timeAgo(item.publishedAt);
   
-      // website (far right)
+      // website
       const s = document.createElement('div');
       s.className = 'source';
       s.textContent = hostFrom(item.link) || 'nytimes.com';
@@ -211,34 +221,39 @@ d.textContent = `${mm}/${dd}/${yyyy}`;
       }
     }
   
+    // ===== visual helpers for toggles =====
+    function applyStripedVisual() {
+      document.body.classList.toggle('striped', striped);
+      stripeBtn.classList.toggle('active', striped);
+      stripeBtn.textContent = `Striped: ${striped ? 'on' : 'off'}`;
+    }
+    function applyAutoVisual() {
+      autoBtn.classList.toggle('active', autoOn);
+      autoBtn.textContent = `Auto Refresh: ${autoOn ? 'on' : 'off'}`;
+    }
+  
     // ===== controls: auto toggle =====
     function startAuto() {
       if (autoTimer) clearInterval(autoTimer);
       autoTimer = setInterval(refresh, AUTO_MS);
       autoOn = true;
-      autoBtn.classList.add('active');
-      autoBtn.textContent = 'Auto Refresh: on';
+      applyAutoVisual();
+      saveSettings();
     }
     function stopAuto() {
       if (autoTimer) clearInterval(autoTimer);
       autoTimer = null;
       autoOn = false;
-      autoBtn.classList.remove('active');
-      autoBtn.textContent = 'Auto Refresh: off';
+      applyAutoVisual();
+      saveSettings();
     }
     autoBtn.addEventListener('click', () => (autoOn ? stopAuto() : startAuto()));
   
     // ===== controls: striped toggle =====
     stripeBtn.addEventListener('click', () => {
       striped = !striped;
-      document.body.classList.toggle('striped', striped);
-      if (striped) {
-        stripeBtn.classList.add('active');
-        stripeBtn.textContent = 'Striped: on';
-      } else {
-        stripeBtn.classList.remove('active');
-        stripeBtn.textContent = 'Striped: off';
-      }
+      applyStripedVisual();
+      saveSettings();
     });
   
     // keyboard: r = refresh, a = toggle auto
@@ -247,9 +262,21 @@ d.textContent = `${mm}/${dd}/${yyyy}`;
       if (e.key === 'a') (autoOn ? stopAuto() : startAuto());
     });
   
-    // ===== boot =====
-    refresh().then(startAuto);
+    // ===== boot: load prefs, apply, refresh, then start auto if on =====
+    (function init() {
+      const prefs = loadSettings();
+      if (typeof prefs.autoOn === 'boolean') autoOn = prefs.autoOn;
+      if (typeof prefs.striped === 'boolean') striped = prefs.striped;
+  
+      applyAutoVisual();
+      applyStripedVisual();
+  
+      refresh().then(() => {
+        if (autoOn) startAuto(); else stopAuto(); // ensures correct interval state + label
+      });
+    })();
   </script>
+  
   
 </body>
 </html>
